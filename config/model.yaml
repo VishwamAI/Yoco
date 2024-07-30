@@ -17,3 +17,48 @@
 # along with VishwamAI. If not, see <https://www.gnu.org/licenses/>.
 #
 # Author: Kasinadhsarma
+
+# Yoco Model Configuration
+
+# Model Architecture
+architecture: 'yoco'
+backbone: 'resnet50'
+num_classes: 80  # COCO dataset has 80 classes
+
+# Input Configuration
+input_size: [640, 640]  # Flexible input size
+channels: 3  # RGB images
+
+# Training Configuration
+batch_size: 4  # Small batch size for minimal dataset
+epochs: 50
+learning_rate: 0.001
+optimizer: 'adam'
+
+# Data Augmentation
+augmentation:
+  horizontal_flip: true
+  vertical_flip: false
+  rotation: 15  # degrees
+  scale: [0.8, 1.2]
+  translation: [0.1, 0.1]
+
+# Loss Functions
+detection_loss: 'focal'
+segmentation_loss: 'dice'
+
+# Output Configuration
+output_stride: 16  # For segmentation
+anchor_sizes: [32, 64, 128, 256, 512]
+aspect_ratios: [0.5, 1, 2]
+
+# Inference
+confidence_threshold: 0.5
+nms_threshold: 0.4
+
+# Hardware
+device: 'cuda'  # Use 'cpu' if CUDA is not available
+
+# Logging and Checkpoints
+log_interval: 10
+save_interval: 5
