@@ -30,6 +30,27 @@ from models.yoco_3d import YOCO3D
 from torchvision import transforms
 from tqdm import tqdm
 import os
+from torch.nn.utils.rnn import pad_sequence
+import sys
+sys.path.append('/home/ubuntu/Yoco')
+
+def custom_collate_fn(batch):
+    images = [item[0] for item in batch]
+    targets = [item[1] for item in batch]
+
+    # Pad images if they have different sizes
+    max_h = max([img.shape[1] for img in images])
+    max_w = max([img.shape[2] for img in images])
+    padded_images = torch.stack([torch.nn.functional.pad(img, (0, max_w - img.shape[2], 0, max_h - img.shape[1])) for img in images])
+
+    # Handle cases where there are no bounding boxes
+    max_num_boxes = max([target['boxes'].shape[0] for target in targets], default=1)
+    padded_boxes = torch.stack([torch.nn.functional.pad(target['boxes'], (0, 0, 0, max_num_boxes - target['boxes'].shape[0]), value=-1) if target['boxes'].shape[0] > 0 else torch.full((max_num_boxes, 4), -1) for target in targets])
+    padded_labels = torch.stack([torch.nn.functional.pad(target['labels'], (0, max_num_boxes - target['labels'].shape[0]), value=-1) if target['labels'].shape[0] > 0 else torch.full((max_num_boxes,), -1) for target in targets])
+
+    padded_targets = [{'boxes': boxes, 'labels': labels} for boxes, labels in zip(padded_boxes, padded_labels)]
+
+    return padded_images, padded_targets
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train Yoco model')
@@ -42,7 +63,42 @@ def load_config(config_path):
         config = yaml.safe_load(file)
     return config
 
-def train(model, train_loader, val_loader, criterion, optimizer, device, config):
+def custom_loss_function(outputs, targets):
+    bbox_pred, class_pred = outputs
+    bbox_targets = [t['boxes'] for t in targets]
+    class_targets = [t['labels'] for t in targets]
+
+    # Ensure bbox_pred and bbox_targets have the same shape
+    bbox_pred = bbox_pred.permute(0, 2, 3, 1).contiguous().view(bbox_pred.size(0), -1, 4)
+    bbox_targets = torch.stack(bbox_targets)
+
+    # Match the number of predicted boxes to the number of target boxes
+    if bbox_pred.size(1) > bbox_targets.size(1):
+        bbox_pred = bbox_pred[:, :bbox_targets.size(1), :]
+    elif bbox_pred.size(1) < bbox_targets.size(1):
+        bbox_targets = bbox_targets[:, :bbox_pred.size(1), :]
+
+    bbox_loss = torch.nn.functional.mse_loss(bbox_pred, bbox_targets)
+
+    # Reshape class_pred to [batch_size, -1, num_classes]
+    class_pred = class_pred.permute(0, 2, 3, 1).contiguous().view(class_pred.size(0), -1, class_pred.size(1))
+
+    # Flatten class_targets to match class_pred
+    class_targets = torch.cat(class_targets).view(-1)
+
+    # Ensure class_targets are long type and within valid range
+    class_targets = class_targets.long()
+    class_targets = torch.clamp(class_targets, 0, class_pred.size(2) - 1)
+
+    # Reshape class_pred for cross-entropy loss
+    class_pred = class_pred.view(-1, class_pred.size(2))
+
+    # Compute class loss using cross entropy
+    class_loss = torch.nn.functional.cross_entropy(class_pred, class_targets)
+
+    return bbox_loss + class_loss
+
+def train(model, train_loader, val_loader, optimizer, device, config):
     best_val_loss = float('inf')
     patience = config['patience']
     counter = 0
@@ -51,11 +107,12 @@ def train(model, train_loader, val_loader, criterion, optimizer, device, config)
         model.train()
         train_loss = 0
         for batch in tqdm(train_loader, desc=f'Epoch {epoch+1}/{config["epochs"]}'):
-            inputs, labels = batch
-            inputs, labels = inputs.to(device), labels.to(device)
+            inputs, targets = batch
+            inputs = inputs.to(device)
+            targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
             optimizer.zero_grad()
             outputs = model(inputs)
-            loss = criterion(outputs, labels)
+            loss = custom_loss_function(outputs, targets)
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
@@ -65,10 +122,11 @@ def train(model, train_loader, val_loader, criterion, optimizer, device, config)
         val_loss = 0
         with torch.no_grad():
             for batch in val_loader:
-                inputs, labels = batch
-                inputs, labels = inputs.to(device), labels.to(device)
+                inputs, targets = batch
+                inputs = inputs.to(device)
+                targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
                 outputs = model(inputs)
-                loss = criterion(outputs, labels)
+                loss = custom_loss_function(outputs, targets)
                 val_loss += loss.item()
 
         train_loss /= len(train_loader)
@@ -100,14 +158,18 @@ def main(args):
 
     # Load datasets
     if args.dim == '2d':
-        train_dataset = ImageDataset(config['train'], transform=transform)
-        val_dataset = ImageDataset(config['val'], transform=transform)
+        train_dataset = ImageDataset(root_dir=config['train'], annotation_file=config['annotation_file'], transform=transform)
+        val_dataset = ImageDataset(root_dir=config['val'], annotation_file=config['annotation_file'], transform=transform)
     else:
-        train_dataset = PointCloudDataset(config['train'], train=True)
-        val_dataset = PointCloudDataset(config['val'], train=False)
+        train_dataset = PointCloudDataset(root_dir=config['train'], train=True)
+        val_dataset = PointCloudDataset(root_dir=config['val'], train=False)
 
-    train_loader = DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=config['batch_size'], shuffle=False)
+    # Ensure annotation_file is passed correctly
+    assert 'annotation_file' in config, "annotation_file not found in config"
+    assert os.path.exists(config['annotation_file']), f"Annotation file {config['annotation_file']} does not exist"
+
+    train_loader = DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=True, collate_fn=custom_collate_fn)
+    val_loader = DataLoader(val_dataset, batch_size=config['batch_size'], shuffle=False, collate_fn=custom_collate_fn)
 
     # Initialize model, loss, and optimizer
     if args.dim == '2d':
@@ -116,11 +178,10 @@ def main(args):
         model = YOCO3D(num_classes=80)
     model.to(device)
 
-    criterion = torch.nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'])
 
     # Training
-    train(model, train_loader, val_loader, criterion, optimizer, device, config)
+    train(model, train_loader, val_loader, optimizer, device, config)
 
 if __name__ == '__main__':
     args = parse_args()
