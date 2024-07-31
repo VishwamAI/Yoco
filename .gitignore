@@ -1,0 +1,45 @@
+# Ignore COCO dataset directory
+data/coco2017/
+
+# Ignore Python cache files
+datasets/__pycache__/
+
+# Ignore common Python-related files
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Ignore common development tool files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore model checkpoints and logs
+*.pt
+*.pth
+*.log
+runs/
+
+# Ignore any Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore any data files that might be generated during training or testing
+*.csv
+*.json
+*.yaml
+!config/*.yaml  # Do not ignore YAML files in the config directory
+
+# Ignore any temporary files
+*.tmp
