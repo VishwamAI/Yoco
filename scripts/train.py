@@ -32,6 +32,9 @@ from tqdm import tqdm
 import os
 from torch.nn.utils.rnn import pad_sequence
 import sys
+from torch.cuda.amp import autocast, GradScaler
+from torch.optim import AdamW
+from torch.optim.lr_scheduler import OneCycleLR
 sys.path.append('/home/ubuntu/Yoco')
 
 def custom_collate_fn(batch):
@@ -84,7 +87,7 @@ def custom_loss_function(outputs, targets):
     class_pred = class_pred.permute(0, 2, 3, 1).contiguous().view(class_pred.size(0), -1, class_pred.size(1))
 
     # Flatten class_targets to match class_pred
-    class_targets = torch.cat(class_targets).view(-1)
+    class_targets = torch.cat([ct.view(-1) for ct in class_targets])
 
     # Ensure class_targets are long type and within valid range
     class_targets = class_targets.long()
@@ -93,29 +96,45 @@ def custom_loss_function(outputs, targets):
     # Reshape class_pred for cross-entropy loss
     class_pred = class_pred.view(-1, class_pred.size(2))
 
+    # Ensure class_targets and class_pred have the same batch size
+    if class_pred.size(0) > class_targets.size(0):
+        class_pred = class_pred[:class_targets.size(0), :]
+    elif class_pred.size(0) < class_targets.size(0):
+        class_targets = class_targets[:class_pred.size(0)]
+
     # Compute class loss using cross entropy
     class_loss = torch.nn.functional.cross_entropy(class_pred, class_targets)
 
     return bbox_loss + class_loss
 
-def train(model, train_loader, val_loader, optimizer, device, config):
+def train(model, train_loader, val_loader, optimizer, device, config, scaler, scheduler):
     best_val_loss = float('inf')
     patience = config['patience']
     counter = 0
+    grad_accum_steps = config['gradient_accumulation_steps']
 
     for epoch in range(config['epochs']):
         model.train()
         train_loss = 0
-        for batch in tqdm(train_loader, desc=f'Epoch {epoch+1}/{config["epochs"]}'):
+        for i, batch in enumerate(tqdm(train_loader, desc=f'Epoch {epoch+1}/{config["epochs"]}')):
             inputs, targets = batch
             inputs = inputs.to(device)
             targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-            optimizer.zero_grad()
-            outputs = model(inputs)
-            loss = custom_loss_function(outputs, targets)
-            loss.backward()
-            optimizer.step()
+
+            with torch.cuda.amp.autocast():
+                outputs = model(inputs)
+                loss = custom_loss_function(outputs, targets)
+
+            scaler.scale(loss).backward()
+
+            if (i + 1) % grad_accum_steps == 0:
+                scaler.step(optimizer)
+                scaler.update()
+                optimizer.zero_grad()
+
             train_loss += loss.item()
+
+        scheduler.step()
 
         # Validation
         model.eval()
@@ -125,8 +144,9 @@ def train(model, train_loader, val_loader, optimizer, device, config):
                 inputs, targets = batch
                 inputs = inputs.to(device)
                 targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-                outputs = model(inputs)
-                loss = custom_loss_function(outputs, targets)
+                with torch.cuda.amp.autocast():
+                    outputs = model(inputs)
+                    loss = custom_loss_function(outputs, targets)
                 val_loss += loss.item()
 
         train_loss /= len(train_loader)
@@ -178,7 +198,8 @@ def main(args):
         model = YOCO3D(num_classes=80)
     model.to(device)
 
-    optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'])
+    optimizer = optim.AdamW(model.parameters(), lr=config['learning_rate'])
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=config['learning_rate'], steps_per_epoch=len(train_loader), epochs=config['epochs'])
 
     # Training
     train(model, train_loader, val_loader, optimizer, device, config)

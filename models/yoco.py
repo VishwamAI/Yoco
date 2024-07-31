@@ -25,14 +25,12 @@ import torchvision.models as models
 class YOCO(nn.Module):
     def __init__(self, num_classes=80):
         super(YOCO, self).__init__()
-        # Use a pre-trained ResNet50 as the backbone for feature extraction
-        self.backbone = models.resnet50(pretrained=True)
-        self.backbone = nn.Sequential(*list(self.backbone.children())[:-2])  # Remove the last two layers (avgpool and fc)
+        # Use a pre-trained MobileNetV2 as the backbone for feature extraction
+        self.backbone = models.mobilenet_v2(pretrained=True).features
 
         # Additional convolutional layers for object detection and segmentation
-        self.conv1 = nn.Conv2d(2048, 1024, kernel_size=3, stride=1, padding=1)
-        self.conv2 = nn.Conv2d(1024, 512, kernel_size=3, stride=1, padding=1)
-        self.conv3 = nn.Conv2d(512, 256, kernel_size=3, stride=1, padding=1)
+        self.conv1 = nn.Conv2d(1280, 512, kernel_size=3, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(512, 256, kernel_size=3, stride=1, padding=1)
 
         # Output layers for bounding box prediction and class probability prediction
         self.bbox_pred = nn.Conv2d(256, num_classes * 4, kernel_size=1)  # 4 coordinates per bounding box
@@ -42,7 +40,6 @@ class YOCO(nn.Module):
         x = self.backbone(x)
         x = torch.relu(self.conv1(x))
         x = torch.relu(self.conv2(x))
-        x = torch.relu(self.conv3(x))
 
         bbox_pred = self.bbox_pred(x)
         class_pred = self.class_pred(x)
