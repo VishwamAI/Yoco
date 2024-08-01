@@ -29,7 +29,7 @@ from models.yoco import YOCO
 from models.yoco_3d import YOCO3D
 from torchvision import transforms
 from tqdm import tqdm
-from torch.cuda.amp import autocast, GradScaler
+from torch.cuda.amp import GradScaler
 import os
 import sys
 
@@ -53,7 +53,9 @@ def custom_collate_fn(batch):
     )
 
     # Handle cases where there are no bounding boxes
-    max_num_boxes = max([target["boxes"].shape[0] for target in targets], default=1)
+    max_num_boxes = max(
+        [target["boxes"].shape[0] for target in targets], default=1
+    )
     padded_boxes = torch.stack(
         [
             (
@@ -94,10 +96,17 @@ def custom_collate_fn(batch):
 def parse_args():
     parser = argparse.ArgumentParser(description="Train Yoco model")
     parser.add_argument(
-        "--config", type=str, default="config/default.yaml", help="path to config file"
+        "--config",
+        type=str,
+        default="config/default.yaml",
+        help="path to config file",
     )
     parser.add_argument(
-        "--dim", type=str, choices=["2d", "3d"], required=True, help="Model dimension"
+        "--dim",
+        type=str,
+        choices=["2d", "3d"],
+        required=True,
+        help="Model dimension",
     )
     return parser.parse_args()
 
@@ -115,7 +124,9 @@ def custom_loss_function(outputs, targets):
 
     # Ensure bbox_pred and bbox_targets have the same shape
     bbox_pred = (
-        bbox_pred.permute(0, 2, 3, 1).contiguous().view(bbox_pred.size(0), -1, 4)
+        bbox_pred.permute(0, 2, 3, 1)
+        .contiguous()
+        .view(bbox_pred.size(0), -1, 4)
     )
     bbox_targets = torch.stack(bbox_targets)
 
@@ -157,7 +168,14 @@ def custom_loss_function(outputs, targets):
 
 
 def train(
-    model, train_loader, val_loader, optimizer, device, config, scaler, scheduler
+    model,
+    train_loader,
+    val_loader,
+    optimizer,
+    device,
+    config,
+    scaler,
+    scheduler,
 ):
     best_val_loss = float("inf")
     patience = config["patience"]
@@ -172,7 +190,9 @@ def train(
         ):
             inputs, targets = batch
             inputs = inputs.to(device)
-            targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+            targets = [
+                {k: v.to(device) for k, v in t.items()} for t in targets
+            ]
 
             with torch.cuda.amp.autocast():
                 outputs = model(inputs)
@@ -196,7 +216,9 @@ def train(
             for batch in val_loader:
                 inputs, targets = batch
                 inputs = inputs.to(device)
-                targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+                targets = [
+                    {k: v.to(device) for k, v in t.items()} for t in targets
+                ]
                 with torch.cuda.amp.autocast():
                     outputs = model(inputs)
                     loss = custom_loss_function(outputs, targets)
@@ -231,7 +253,9 @@ def main(args):
         [
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+            ),
         ]
     )
 
@@ -286,10 +310,17 @@ def main(args):
     )
 
     # Training
-    from torch.cuda.amp import GradScaler
-
     scaler = GradScaler()
-    train(model, train_loader, val_loader, optimizer, device, config, scaler, scheduler)
+    train(
+        model,
+        train_loader,
+        val_loader,
+        optimizer,
+        device,
+        config,
+        scaler,
+        scheduler,
+    )
 
 
 if __name__ == "__main__":

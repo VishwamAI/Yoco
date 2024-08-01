@@ -25,7 +25,11 @@ from models.yoco import YOCO
 from models.yoco_3d import YOCO3D
 from datasets.image_dataset import ImageDataset
 from datasets.point_cloud_dataset import PointCloudDataset
-from utils.metrics import precision_recall_f1, mean_average_precision, confusion_matrix
+from utils.metrics import (
+    precision_recall_f1,
+    mean_average_precision,
+    confusion_matrix,
+)
 from tqdm.auto import tqdm
 
 
@@ -37,9 +41,15 @@ def parse_args():
     parser.add_argument(
         "--data", type=str, required=True, help="Path to validation data"
     )
-    parser.add_argument("--batch-size", type=int, default=32, help="Batch size")
     parser.add_argument(
-        "--dim", type=str, choices=["2d", "3d"], required=True, help="Model dimension"
+        "--batch-size", type=int, default=32, help="Batch size"
+    )
+    parser.add_argument(
+        "--dim",
+        type=str,
+        choices=["2d", "3d"],
+        required=True,
+        help="Model dimension",
     )
     parser.add_argument(
         "--device",
