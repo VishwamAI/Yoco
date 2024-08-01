@@ -1,0 +1,17 @@
+torch
+torchvision
+numpy
+opencv-python
+Pillow
+scipy
+pandas
+matplotlib
+tqdm
+requests
+pyyaml
+tensorboard
+scikit-learn
+scikit-image
+h5py
+pycocotools
+open3d
