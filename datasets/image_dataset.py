@@ -64,7 +64,9 @@ class ImageDataset(Dataset):
         # Get annotations for this image
         img_id = img_info["id"]
         annotations = [
-            ann for ann in self.annotations["annotations"] if ann["image_id"] == img_id
+            ann
+            for ann in self.annotations["annotations"]
+            if ann["image_id"] == img_id
         ]
 
         # Create target tensor
