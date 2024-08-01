@@ -62,7 +62,9 @@ class VideoDataset(Dataset):
         cap.release()
 
         if len(frames) < self.sequence_length:
-            frames = frames + [frames[-1]] * (self.sequence_length - len(frames))
+            frames = frames + [frames[-1]] * (
+                self.sequence_length - len(frames)
+            )
         elif len(frames) > self.sequence_length:
             frames = frames[:self.sequence_length]
 
@@ -85,6 +87,9 @@ class VideoDataset(Dataset):
 #     transforms.ToPILImage(),
 #     transforms.Resize((224, 224)),
 #     transforms.ToTensor(),
-#     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+#     transforms.Normalize(
+#         mean=[0.485, 0.456, 0.406],
+#         std=[0.229, 0.224, 0.225]
+#     ),
 # ])
 # video_dataset = VideoDataset(video_paths, transform=transform)
