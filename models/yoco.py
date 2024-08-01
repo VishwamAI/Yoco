@@ -35,9 +35,7 @@ class YOCO(nn.Module):
 
         # Output layers for bounding box prediction
         # and class probability prediction
-        self.bbox_pred = nn.Conv2d(
-            256, num_classes * 4, kernel_size=1
-        )
+        self.bbox_pred = nn.Conv2d(256, num_classes * 4, kernel_size=1)
         self.class_pred = nn.Conv2d(256, num_classes, kernel_size=1)
 
     def forward(self, x):
