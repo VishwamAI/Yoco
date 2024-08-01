@@ -20,12 +20,8 @@
 
 import argparse
 import os
-import json
 from tqdm import tqdm
-import numpy as np
 import cv2
-import torch
-from torchvision import transforms
 from utils.general import (
     load_image,
     load_point_cloud,

@@ -29,12 +29,9 @@ from models.yoco import YOCO
 from models.yoco_3d import YOCO3D
 from torchvision import transforms
 from tqdm import tqdm
-import os
-from torch.nn.utils.rnn import pad_sequence
-import sys
 from torch.cuda.amp import autocast, GradScaler
-from torch.optim import AdamW
-from torch.optim.lr_scheduler import OneCycleLR
+import os
+import sys
 
 sys.path.append("/home/ubuntu/Yoco")
 
@@ -289,6 +286,7 @@ def main(args):
     )
 
     # Training
+    from torch.cuda.amp import GradScaler
     scaler = GradScaler()
     train(model, train_loader, val_loader, optimizer, device, config, scaler, scheduler)
 
