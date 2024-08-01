@@ -23,6 +23,7 @@ import torch
 from torch.utils.data import Dataset
 from PIL import Image
 
+
 class YocoDataset(Dataset):
     def __init__(self, images_dir, labels_dir, transform=None):
         self.images_dir = images_dir
@@ -36,12 +37,14 @@ class YocoDataset(Dataset):
     def __getitem__(self, idx):
         img_name = os.path.join(self.images_dir, self.image_files[idx])
         image = Image.open(img_name).convert("RGB")
-        label_name = os.path.join(self.labels_dir, self.image_files[idx].replace('.jpg', '.txt'))
+        label_name = os.path.join(
+            self.labels_dir, self.image_files[idx].replace('.jpg', '.txt')
+        )
         label = self._load_label(label_name)
-        
+
         if self.transform:
             image = self.transform(image)
-        
+
         return image, label
 
     def _load_label(self, label_path):

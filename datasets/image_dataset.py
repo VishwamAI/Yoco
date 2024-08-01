@@ -24,10 +24,10 @@ from torchvision import transforms
 from PIL import Image
 import os
 import json
-import numpy as np
 
 class ImageDataset(Dataset):
-    def __init__(self, root_dir, annotation_file, transform=None, target_transform=None):
+    def __init__(self, root_dir, annotation_file, transform=None,
+                 target_transform=None):
         self.root_dir = root_dir
         self.transform = transform
         self.target_transform = target_transform
@@ -36,13 +36,15 @@ class ImageDataset(Dataset):
             self.annotations = json.load(f)
 
         self.images = self.annotations['images']
-        self.categories = {cat['id']: cat['name'] for cat in self.annotations['categories']}
+        self.categories = {cat['id']: cat['name'] for cat in
+                           self.annotations['categories']}
 
         if not self.transform:
             self.transform = transforms.Compose([
                 transforms.Resize((640, 640)),
                 transforms.ToTensor(),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+                transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     std=[0.229, 0.224, 0.225])
             ])
 
     def __len__(self):
@@ -55,7 +57,8 @@ class ImageDataset(Dataset):
 
         # Get annotations for this image
         img_id = img_info['id']
-        annotations = [ann for ann in self.annotations['annotations'] if ann['image_id'] == img_id]
+        annotations = [ann for ann in self.annotations['annotations']
+                       if ann['image_id'] == img_id]
 
         # Create target tensor
         boxes = []
