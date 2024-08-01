@@ -35,9 +35,7 @@ def parse_args():
         required=True,
         help="Path to the trained weights file",
     )
-    parser.add_argument(
-        "--output", type=str, required=True, help="Output file name"
-    )
+    parser.add_argument("--output", type=str, required=True, help="Output file name")
     parser.add_argument(
         "--format",
         type=str,
@@ -64,9 +62,7 @@ def parse_args():
 
 def export_onnx(model, img_size, output_path):
     dummy_input = torch.randn(1, 3, *img_size)
-    torch.onnx.export(
-        model, dummy_input, output_path, verbose=True, opset_version=11
-    )
+    torch.onnx.export(model, dummy_input, output_path, verbose=True, opset_version=11)
     print(f"ONNX model exported to {output_path}")
 
 
