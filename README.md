@@ -1,4 +1,5 @@
 # Yoco
+[![CI](https://github.com/VishwamAI/Yoco/actions/workflows/ci.yml/badge.svg)](https://github.com/VishwamAI/Yoco/actions/workflows/ci.yml)
 
 Yoco is an advanced computer vision project that combines YOLO (You Only Look Once) and COCO (Common Objects in Context) models into a unified framework. The goal of Yoco is to leverage the strengths of both models for enhanced object detection and segmentation across a variety of datasets.
 
