@@ -30,7 +30,7 @@ class PointCloudDataset(Dataset):
         self.root_dir = root_dir
         self.transform = transform
         self.train = train
-        self.file_list = [f for f in os.listdir(root_dir) if f.endswith('.pcd')]
+        self.file_list = [f for f in os.listdir(root_dir) if f.endswith(".pcd")]
 
     def __len__(self):
         return len(self.file_list)
@@ -63,15 +63,27 @@ class PointCloudDataset(Dataset):
 
     @staticmethod
     def random_rotation_3d():
-        angles = np.random.uniform(0, 2*np.pi, size=3)
-        Rx = np.array([[1, 0, 0],
-                       [0, np.cos(angles[0]), -np.sin(angles[0])],
-                       [0, np.sin(angles[0]), np.cos(angles[0])]])
-        Ry = np.array([[np.cos(angles[1]), 0, np.sin(angles[1])],
-                       [0, 1, 0],
-                       [-np.sin(angles[1]), 0, np.cos(angles[1])]])
-        Rz = np.array([[np.cos(angles[2]), -np.sin(angles[2]), 0],
-                       [np.sin(angles[2]), np.cos(angles[2]), 0],
-                       [0, 0, 1]])
+        angles = np.random.uniform(0, 2 * np.pi, size=3)
+        Rx = np.array(
+            [
+                [1, 0, 0],
+                [0, np.cos(angles[0]), -np.sin(angles[0])],
+                [0, np.sin(angles[0]), np.cos(angles[0])],
+            ]
+        )
+        Ry = np.array(
+            [
+                [np.cos(angles[1]), 0, np.sin(angles[1])],
+                [0, 1, 0],
+                [-np.sin(angles[1]), 0, np.cos(angles[1])],
+            ]
+        )
+        Rz = np.array(
+            [
+                [np.cos(angles[2]), -np.sin(angles[2]), 0],
+                [np.sin(angles[2]), np.cos(angles[2]), 0],
+                [0, 0, 1],
+            ]
+        )
         R = np.dot(Rz, np.dot(Ry, Rx))
         return R

@@ -23,6 +23,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from .yoco import YOCO
 
+
 class YOCORobotics(nn.Module):
     def __init__(self, num_classes=80):
         super(YOCORobotics, self).__init__()
@@ -33,7 +34,7 @@ class YOCORobotics(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv3d(64, 128, kernel_size=3, padding=1),
             nn.BatchNorm3d(128),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
         )
         self.camera_conv = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=3, padding=1),
@@ -41,7 +42,7 @@ class YOCORobotics(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(64, 128, kernel_size=3, padding=1),
             nn.BatchNorm2d(128),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
         )
         self.fc_fusion = nn.Linear(128 * 7 * 7 * 7 + 128 * 7 * 7, num_classes)
 

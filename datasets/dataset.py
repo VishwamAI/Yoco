@@ -38,7 +38,7 @@ class YocoDataset(Dataset):
         img_name = os.path.join(self.images_dir, self.image_files[idx])
         image = Image.open(img_name).convert("RGB")
         label_name = os.path.join(
-            self.labels_dir, self.image_files[idx].replace('.jpg', '.txt')
+            self.labels_dir, self.image_files[idx].replace(".jpg", ".txt")
         )
         label = self._load_label(label_name)
 
@@ -48,6 +48,6 @@ class YocoDataset(Dataset):
         return image, label
 
     def _load_label(self, label_path):
-        with open(label_path, 'r') as file:
+        with open(label_path, "r") as file:
             label = file.read().strip()
         return torch.tensor(int(label))

@@ -27,7 +27,7 @@ import open3d as o3d
 
 def load_image(file_path):
     """Load an image file."""
-    return Image.open(file_path).convert('RGB')
+    return Image.open(file_path).convert("RGB")
 
 
 def load_point_cloud(file_path):
@@ -70,7 +70,8 @@ def augment_3d(points):
     """Apply 3D data augmentation."""
     # Example: random rotation
     rotation = o3d.geometry.get_rotation_matrix_from_xyz(
-        (np.random.rand(3) - 0.5) * 0.1)
+        (np.random.rand(3) - 0.5) * 0.1
+    )
     points.rotate(rotation)
     return points
 
@@ -84,13 +85,13 @@ def convert_2d_to_3d(points_2d, depth, camera_matrix):
 
 def load_coco_annotations(file_path):
     """Load COCO format annotations."""
-    with open(file_path, 'r') as f:
+    with open(file_path, "r") as f:
         return json.load(f)
 
 
 def save_coco_annotations(annotations, file_path):
     """Save annotations in COCO format."""
-    with open(file_path, 'w') as f:
+    with open(file_path, "w") as f:
         json.dump(annotations, f)
 
 

@@ -33,8 +33,7 @@ def plot_2d_bounding_boxes(image, boxes, labels=None, colors=None):
     for i, box in enumerate(boxes):
         x1, y1, x2, y2 = box
         rect = plt.Rectangle(
-            (x1, y1), x2 - x1, y2 - y1, fill=False, edgecolor=colors[i],
-            linewidth=2
+            (x1, y1), x2 - x1, y2 - y1, fill=False, edgecolor=colors[i], linewidth=2
         )
         ax.add_patch(rect)
         if labels:
@@ -108,5 +107,6 @@ def plot_feature_map(feature_map):
         plt.axis("off")
     plt.tight_layout()
     plt.show()
+
 
 # Add more plotting functions as needed

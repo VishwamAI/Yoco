@@ -62,7 +62,7 @@ class VideoDataset(Dataset):
         if len(frames) < self.sequence_length:
             frames = frames + [frames[-1]] * (self.sequence_length - len(frames))
         elif len(frames) > self.sequence_length:
-            frames = frames[:self.sequence_length]
+            frames = frames[: self.sequence_length]
 
         return frames
 
@@ -76,6 +76,7 @@ class VideoDataset(Dataset):
             frames = [np.fliplr(frame) for frame in frames]  # Horizontal flip
 
         return frames
+
 
 # Example usage:
 # transform = transforms.Compose([
