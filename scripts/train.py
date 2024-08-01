@@ -53,7 +53,9 @@ def custom_collate_fn(batch):
     )
 
     # Handle cases where there are no bounding boxes
-    max_num_boxes = max([target["boxes"].shape[0] for target in targets], default=1)
+    max_num_boxes = max(
+        [target["boxes"].shape[0] for target in targets], default=1
+    )
     padded_boxes = torch.stack(
         [
             (
@@ -122,7 +124,9 @@ def custom_loss_function(outputs, targets):
 
     # Ensure bbox_pred and bbox_targets have the same shape
     bbox_pred = (
-        bbox_pred.permute(0, 2, 3, 1).contiguous().view(bbox_pred.size(0), -1, 4)
+        bbox_pred.permute(0, 2, 3, 1)
+        .contiguous()
+        .view(bbox_pred.size(0), -1, 4)
     )
     bbox_targets = torch.stack(bbox_targets)
 
@@ -186,7 +190,9 @@ def train(
         ):
             inputs, targets = batch
             inputs = inputs.to(device)
-            targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+            targets = [
+                {k: v.to(device) for k, v in t.items()} for t in targets
+            ]
 
             with torch.cuda.amp.autocast():
                 outputs = model(inputs)
@@ -210,7 +216,9 @@ def train(
             for batch in val_loader:
                 inputs, targets = batch
                 inputs = inputs.to(device)
-                targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+                targets = [
+                    {k: v.to(device) for k, v in t.items()} for t in targets
+                ]
                 with torch.cuda.amp.autocast():
                     outputs = model(inputs)
                     loss = custom_loss_function(outputs, targets)
@@ -245,7 +253,9 @@ def main(args):
         [
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+            ),
         ]
     )
 

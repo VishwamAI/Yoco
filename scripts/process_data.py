@@ -60,7 +60,9 @@ def parse_args():
 
 
 def process_2d_data(input_dir, output_dir, augment=False):
-    annotations = load_coco_annotations(os.path.join(input_dir, "annotations.json"))
+    annotations = load_coco_annotations(
+        os.path.join(input_dir, "annotations.json")
+    )
     for img_info in tqdm(annotations["images"], desc="Processing 2D data"):
         img_path = os.path.join(input_dir, img_info["file_name"])
         img = load_image(img_path)
@@ -69,7 +71,9 @@ def process_2d_data(input_dir, output_dir, augment=False):
         # Add more processing steps here (e.g., resizing, normalization)
         processed_img_path = os.path.join(output_dir, img_info["file_name"])
         cv2.imwrite(processed_img_path, img)
-    save_coco_annotations(annotations, os.path.join(output_dir, "annotations.json"))
+    save_coco_annotations(
+        annotations, os.path.join(output_dir, "annotations.json")
+    )
 
 
 def process_3d_data(input_dir, output_dir, augment=False):
