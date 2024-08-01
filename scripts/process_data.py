@@ -99,7 +99,6 @@ def process_video_data(input_dir, output_dir, augment=False):
                     frame = augment_2d(frame)
                 # Add more processing steps here
                 processed_frames.append(frame)
-            processed_video_path = os.path.join(output_dir, file_name)
             # Save processed frames as a video
             # (You may need to implement a function to save frames as video)
 

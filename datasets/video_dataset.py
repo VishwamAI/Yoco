@@ -77,7 +77,9 @@ class VideoDataset(Dataset):
 
         # Spatial augmentation
         if random.random() < 0.5:
-            frames = [np.fliplr(frame) for frame in frames]  # Horizontal flip
+            frames = [
+                np.fliplr(frame) for frame in frames
+            ]  # Horizontal flip
 
         return frames
 
