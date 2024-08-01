@@ -30,8 +30,12 @@ class YOCO(nn.Module):
         self.backbone = models.mobilenet_v2(pretrained=True).features
 
         # Additional convolutional layers for object detection and segmentation
-        self.conv1 = nn.Conv2d(1280, 512, kernel_size=3, stride=1, padding=1)
-        self.conv2 = nn.Conv2d(512, 256, kernel_size=3, stride=1, padding=1)
+        self.conv1 = nn.Conv2d(
+            1280, 512, kernel_size=3, stride=1, padding=1
+        )
+        self.conv2 = nn.Conv2d(
+            512, 256, kernel_size=3, stride=1, padding=1
+        )
 
         # Output layers for bounding box prediction and class probability prediction
         self.bbox_pred = nn.Conv2d(256, num_classes * 4, kernel_size=1)

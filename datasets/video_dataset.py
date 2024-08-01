@@ -62,11 +62,9 @@ class VideoDataset(Dataset):
         cap.release()
 
         if len(frames) < self.sequence_length:
-            frames = frames + [frames[-1]] * (
-                self.sequence_length - len(frames)
-            )
+            frames = frames + [frames[-1]] * (self.sequence_length - len(frames))
         elif len(frames) > self.sequence_length:
-            frames = frames[: self.sequence_length]
+            frames = frames[:self.sequence_length]
 
         return frames
 
