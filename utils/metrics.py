@@ -33,7 +33,7 @@ def precision_recall_f1(preds, targets, iou_threshold=0.5):
             fn += 1
     precision = tp / (tp + fp) if tp + fp > 0 else 0
     recall = tp / (tp + fn) if tp + fn > 0 else 0
-    f1 = 2 * (precision * recall) / (precision + recall) if precision + recall > 0 else 0
+    f1 = (2 * precision * recall) / (precision + recall) if precision + recall > 0 else 0
     return precision, recall, f1
 
 
