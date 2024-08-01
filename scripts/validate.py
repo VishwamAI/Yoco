@@ -41,7 +41,11 @@ def parse_args():
     parser.add_argument(
         "--data", type=str, required=True, help="Path to validation data"
     )
-    parser.add_argument("--batch-size", type=int, default=32, help="Batch size")
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=32,
+        help="Batch size")
     parser.add_argument(
         "--dim",
         type=str,

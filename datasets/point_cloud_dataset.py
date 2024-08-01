@@ -30,7 +30,8 @@ class PointCloudDataset(Dataset):
         self.root_dir = root_dir
         self.transform = transform
         self.train = train
-        self.file_list = [f for f in os.listdir(root_dir) if f.endswith(".pcd")]
+        self.file_list = [f for f in os.listdir(
+            root_dir) if f.endswith(".pcd")]
 
     def __len__(self):
         return len(self.file_list)
