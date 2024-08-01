@@ -287,6 +287,7 @@ def main(args):
 
     # Training
     from torch.cuda.amp import GradScaler
+
     scaler = GradScaler()
     train(model, train_loader, val_loader, optimizer, device, config, scaler, scheduler)
 
