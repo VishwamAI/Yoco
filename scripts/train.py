@@ -53,8 +53,9 @@ def custom_collate_fn(batch):
     )
 
     # Handle cases where there are no bounding boxes
-    max_num_boxes = max([target["boxes"].shape[0]
-                        for target in targets], default=1)
+    max_num_boxes = max(
+        [target["boxes"].shape[0] for target in targets], default=1
+    )
     padded_boxes = torch.stack(
         [
             (
