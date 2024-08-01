@@ -25,12 +25,16 @@ from models.yoco import YOCO
 from models.yoco_3d import YOCO3D
 from datasets.image_dataset import ImageDataset
 from datasets.point_cloud_dataset import PointCloudDataset
-from utils.metrics import precision_recall_f1, mean_average_precision, confusion_matrix
+from utils.metrics import (
+    precision_recall_f1,
+    mean_average_precision,
+    confusion_matrix
+)
 from tqdm.auto import tqdm
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Validate Yoco model')
-
     parser.add_argument('--weights', type=str, required=True,
                         help='Path to model weights')
     parser.add_argument('--data', type=str, required=True,
@@ -42,11 +46,10 @@ def parse_args():
     parser.add_argument('--device', type=str,
                         default='cuda' if torch.cuda.is_available() else 'cpu',
                         help='Device to use')
-
     return parser.parse_args()
 
-def validate(model, dataloader, device):
 
+def validate(model, dataloader, device):
     model.eval()
     all_preds = []
     all_targets = []
@@ -66,11 +69,10 @@ def validate(model, dataloader, device):
 
     return precision, recall, f1, mAP, cm
 
+
 def main():
     args = parse_args()
-
     device = torch.device(args.device)
-
 
     # Load model
     if args.dim == '2d':
@@ -81,7 +83,6 @@ def main():
     model.load_state_dict(torch.load(args.weights))
     model.to(device)
 
-
     # Load dataset
     if args.dim == '2d':
         dataset = ImageDataset(args.data, train=False)
@@ -90,10 +91,8 @@ def main():
 
     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
 
-
     # Run validation
     precision, recall, f1, mAP, cm = validate(model, dataloader, device)
-
 
     # Print results
     print(f'Precision: {precision:.4f}')

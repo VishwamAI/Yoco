@@ -22,8 +22,8 @@ import torch
 import cv2
 import numpy as np
 from torch.utils.data import Dataset
-from torchvision import transforms
 import random
+
 
 class VideoDataset(Dataset):
     def __init__(self, video_paths, sequence_length=16, transform=None, train=True):

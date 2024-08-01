@@ -35,7 +35,9 @@ import sys
 from torch.cuda.amp import autocast, GradScaler
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import OneCycleLR
+
 sys.path.append('/home/ubuntu/Yoco')
+
 
 def custom_collate_fn(batch):
     images = [item[0] for item in batch]
@@ -44,27 +46,52 @@ def custom_collate_fn(batch):
     # Pad images if they have different sizes
     max_h = max([img.shape[1] for img in images])
     max_w = max([img.shape[2] for img in images])
-    padded_images = torch.stack([torch.nn.functional.pad(img, (0, max_w - img.shape[2], 0, max_h - img.shape[1])) for img in images])
+    padded_images = torch.stack([
+        torch.nn.functional.pad(img, (0, max_w - img.shape[2], 0, max_h - img.shape[1]))
+        for img in images
+    ])
 
     # Handle cases where there are no bounding boxes
     max_num_boxes = max([target['boxes'].shape[0] for target in targets], default=1)
-    padded_boxes = torch.stack([torch.nn.functional.pad(target['boxes'], (0, 0, 0, max_num_boxes - target['boxes'].shape[0]), value=-1) if target['boxes'].shape[0] > 0 else torch.full((max_num_boxes, 4), -1) for target in targets])
-    padded_labels = torch.stack([torch.nn.functional.pad(target['labels'], (0, max_num_boxes - target['labels'].shape[0]), value=-1) if target['labels'].shape[0] > 0 else torch.full((max_num_boxes,), -1) for target in targets])
+    padded_boxes = torch.stack([
+        torch.nn.functional.pad(
+            target['boxes'],
+            (0, 0, 0, max_num_boxes - target['boxes'].shape[0]),
+            value=-1
+        ) if target['boxes'].shape[0] > 0 else torch.full((max_num_boxes, 4), -1)
+        for target in targets
+    ])
+    padded_labels = torch.stack([
+        torch.nn.functional.pad(
+            target['labels'],
+            (0, max_num_boxes - target['labels'].shape[0]),
+            value=-1
+        ) if target['labels'].shape[0] > 0 else torch.full((max_num_boxes,), -1)
+        for target in targets
+    ])
 
-    padded_targets = [{'boxes': boxes, 'labels': labels} for boxes, labels in zip(padded_boxes, padded_labels)]
+    padded_targets = [
+        {'boxes': boxes, 'labels': labels}
+        for boxes, labels in zip(padded_boxes, padded_labels)
+    ]
 
     return padded_images, padded_targets
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Train Yoco model')
-    parser.add_argument('--config', type=str, default='config/default.yaml', help='path to config file')
-    parser.add_argument('--dim', type=str, choices=['2d', '3d'], required=True, help='Model dimension')
+    parser.add_argument('--config', type=str, default='config/default.yaml',
+                        help='path to config file')
+    parser.add_argument('--dim', type=str, choices=['2d', '3d'], required=True,
+                        help='Model dimension')
     return parser.parse_args()
+
 
 def load_config(config_path):
     with open(config_path, 'r') as file:
         config = yaml.safe_load(file)
     return config
+
 
 def custom_loss_function(outputs, targets):
     bbox_pred, class_pred = outputs
@@ -84,7 +111,9 @@ def custom_loss_function(outputs, targets):
     bbox_loss = torch.nn.functional.mse_loss(bbox_pred, bbox_targets)
 
     # Reshape class_pred to [batch_size, -1, num_classes]
-    class_pred = class_pred.permute(0, 2, 3, 1).contiguous().view(class_pred.size(0), -1, class_pred.size(1))
+    class_pred = class_pred.permute(0, 2, 3, 1).contiguous().view(
+        class_pred.size(0), -1, class_pred.size(1)
+    )
 
     # Flatten class_targets to match class_pred
     class_targets = torch.cat([ct.view(-1) for ct in class_targets])
@@ -106,6 +135,7 @@ def custom_loss_function(outputs, targets):
     class_loss = torch.nn.functional.cross_entropy(class_pred, class_targets)
 
     return bbox_loss + class_loss
+
 
 def train(model, train_loader, val_loader, optimizer, device, config, scaler, scheduler):
     best_val_loss = float('inf')
@@ -151,7 +181,8 @@ def train(model, train_loader, val_loader, optimizer, device, config, scaler, sc
 
         train_loss /= len(train_loader)
         val_loss /= len(val_loader)
-        print(f'Epoch [{epoch+1}/{config["epochs"]}], Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}')
+        print(f'Epoch [{epoch+1}/{config["epochs"]}], '
+              f'Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}')
 
         # Early stopping and model checkpointing
         if val_loss < best_val_loss:
@@ -164,6 +195,7 @@ def train(model, train_loader, val_loader, optimizer, device, config, scaler, sc
             if counter >= patience:
                 print(f'Early stopping triggered after {epoch+1} epochs')
                 break
+
 
 def main(args):
     config = load_config(args.config)
@@ -178,18 +210,26 @@ def main(args):
 
     # Load datasets
     if args.dim == '2d':
-        train_dataset = ImageDataset(root_dir=config['train'], annotation_file=config['annotation_file'], transform=transform)
-        val_dataset = ImageDataset(root_dir=config['val'], annotation_file=config['annotation_file'], transform=transform)
+        train_dataset = ImageDataset(root_dir=config['train'],
+                                     annotation_file=config['annotation_file'],
+                                     transform=transform)
+        val_dataset = ImageDataset(root_dir=config['val'],
+                                   annotation_file=config['annotation_file'],
+                                   transform=transform)
     else:
         train_dataset = PointCloudDataset(root_dir=config['train'], train=True)
         val_dataset = PointCloudDataset(root_dir=config['val'], train=False)
 
     # Ensure annotation_file is passed correctly
     assert 'annotation_file' in config, "annotation_file not found in config"
-    assert os.path.exists(config['annotation_file']), f"Annotation file {config['annotation_file']} does not exist"
+    assert os.path.exists(config['annotation_file']), (
+        f"Annotation file {config['annotation_file']} does not exist"
+    )
 
-    train_loader = DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=True, collate_fn=custom_collate_fn)
-    val_loader = DataLoader(val_dataset, batch_size=config['batch_size'], shuffle=False, collate_fn=custom_collate_fn)
+    train_loader = DataLoader(train_dataset, batch_size=config['batch_size'],
+                              shuffle=True, collate_fn=custom_collate_fn)
+    val_loader = DataLoader(val_dataset, batch_size=config['batch_size'],
+                            shuffle=False, collate_fn=custom_collate_fn)
 
     # Initialize model, loss, and optimizer
     if args.dim == '2d':
@@ -199,10 +239,15 @@ def main(args):
     model.to(device)
 
     optimizer = optim.AdamW(model.parameters(), lr=config['learning_rate'])
-    scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=config['learning_rate'], steps_per_epoch=len(train_loader), epochs=config['epochs'])
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(
+        optimizer, max_lr=config['learning_rate'],
+        steps_per_epoch=len(train_loader), epochs=config['epochs']
+    )
 
     # Training
-    train(model, train_loader, val_loader, optimizer, device, config)
+    scaler = GradScaler()
+    train(model, train_loader, val_loader, optimizer, device, config, scaler, scheduler)
+
 
 if __name__ == '__main__':
     args = parse_args()
