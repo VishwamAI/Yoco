@@ -79,7 +79,8 @@ def augment_3d(points):
 def convert_2d_to_3d(points_2d, depth, camera_matrix):
     """Convert 2D points to 3D given depth and camera matrix."""
     points_2d_homogeneous = np.column_stack(
-        (points_2d, np.ones(len(points_2d))))
+        (points_2d, np.ones(len(points_2d)))
+    )
     points_3d = np.dot(np.linalg.inv(camera_matrix), points_2d_homogeneous.T).T
     return points_3d * depth[:, np.newaxis]
 

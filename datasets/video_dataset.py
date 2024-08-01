@@ -27,11 +27,8 @@ import random
 
 class VideoDataset(Dataset):
     def __init__(
-            self,
-            video_paths,
-            sequence_length=16,
-            transform=None,
-            train=True):
+        self, video_paths, sequence_length=16, transform=None, train=True
+    ):
         self.video_paths = video_paths
         self.sequence_length = sequence_length
         self.transform = transform
@@ -65,8 +62,9 @@ class VideoDataset(Dataset):
         cap.release()
 
         if len(frames) < self.sequence_length:
-            frames = frames + [frames[-1]] * \
-                (self.sequence_length - len(frames))
+            frames = frames + [frames[-1]] * (
+                self.sequence_length - len(frames)
+            )
         elif len(frames) > self.sequence_length:
             frames = frames[: self.sequence_length]
 
