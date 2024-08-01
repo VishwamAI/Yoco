@@ -24,49 +24,61 @@ from torchvision import transforms
 from PIL import Image
 import os
 import json
-import numpy as np
+
 
 class ImageDataset(Dataset):
-    def __init__(self, root_dir, annotation_file, transform=None, target_transform=None):
+    def __init__(
+        self, root_dir, annotation_file, transform=None, target_transform=None
+    ):
         self.root_dir = root_dir
         self.transform = transform
         self.target_transform = target_transform
 
-        with open(annotation_file, 'r') as f:
+        with open(annotation_file, "r") as f:
             self.annotations = json.load(f)
 
-        self.images = self.annotations['images']
-        self.categories = {cat['id']: cat['name'] for cat in self.annotations['categories']}
+        self.images = self.annotations["images"]
+        self.categories = {
+            cat["id"]: cat["name"] for cat in self.annotations["categories"]
+        }
 
         if not self.transform:
-            self.transform = transforms.Compose([
-                transforms.Resize((640, 640)),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-            ])
+            self.transform = transforms.Compose(
+                [
+                    transforms.Resize((640, 640)),
+                    transforms.ToTensor(),
+                    transforms.Normalize(
+                        mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                    ),
+                ]
+            )
 
     def __len__(self):
         return len(self.images)
 
     def __getitem__(self, idx):
         img_info = self.images[idx]
-        img_path = os.path.join(self.root_dir, img_info['file_name'])
-        image = Image.open(img_path).convert('RGB')
+        img_path = os.path.join(self.root_dir, img_info["file_name"])
+        image = Image.open(img_path).convert("RGB")
 
         # Get annotations for this image
-        img_id = img_info['id']
-        annotations = [ann for ann in self.annotations['annotations'] if ann['image_id'] == img_id]
+        img_id = img_info["id"]
+        annotations = [
+            ann
+            for ann in self.annotations["annotations"]
+            if ann["image_id"] == img_id
+        ]
 
         # Create target tensor
         boxes = []
         labels = []
         for ann in annotations:
-            boxes.append(ann['bbox'])
-            labels.append(ann['category_id'])
+            boxes.append(ann["bbox"])
+            labels.append(ann["category_id"])
 
         target = {}
-        target['boxes'] = torch.as_tensor(boxes, dtype=torch.float32)
-        target['labels'] = torch.as_tensor(labels, dtype=torch.int64)
+        target["boxes"] = torch.as_tensor(boxes, dtype=torch.float32)
+        target["labels"] = torch.as_tensor(labels, dtype=torch.int64)
 
         if self.transform:
             image = self.transform(image)

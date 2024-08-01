@@ -23,6 +23,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from .yoco import YOCO
 
+
 class DoubleConv(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(DoubleConv, self).__init__()
@@ -32,11 +33,12 @@ class DoubleConv(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv3d(out_channels, out_channels, kernel_size=3, padding=1),
             nn.BatchNorm3d(out_channels),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
         )
 
     def forward(self, x):
         return self.double_conv(x)
+
 
 class YOCO3D(nn.Module):
     def __init__(self, num_classes=80, in_channels=1):

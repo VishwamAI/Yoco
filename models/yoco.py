@@ -22,6 +22,7 @@ import torch
 import torch.nn as nn
 import torchvision.models as models
 
+
 class YOCO(nn.Module):
     def __init__(self, num_classes=80):
         super(YOCO, self).__init__()
@@ -32,9 +33,10 @@ class YOCO(nn.Module):
         self.conv1 = nn.Conv2d(1280, 512, kernel_size=3, stride=1, padding=1)
         self.conv2 = nn.Conv2d(512, 256, kernel_size=3, stride=1, padding=1)
 
-        # Output layers for bounding box prediction and class probability prediction
-        self.bbox_pred = nn.Conv2d(256, num_classes * 4, kernel_size=1)  # 4 coordinates per bounding box
-        self.class_pred = nn.Conv2d(256, num_classes, kernel_size=1)  # Class probabilities
+        # Output layers for bounding box prediction
+        # and class probability prediction
+        self.bbox_pred = nn.Conv2d(256, num_classes * 4, kernel_size=1)
+        self.class_pred = nn.Conv2d(256, num_classes, kernel_size=1)
 
     def forward(self, x):
         x = self.backbone(x)

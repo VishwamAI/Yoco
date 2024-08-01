@@ -25,17 +25,40 @@ from models.yoco import YOCO
 from models.yoco_3d import YOCO3D
 from datasets.image_dataset import ImageDataset
 from datasets.point_cloud_dataset import PointCloudDataset
-from utils.metrics import precision_recall_f1, mean_average_precision, confusion_matrix
+from utils.metrics import (
+    precision_recall_f1,
+    mean_average_precision,
+    confusion_matrix,
+)
 from tqdm.auto import tqdm
 
+
 def parse_args():
-    parser = argparse.ArgumentParser(description='Validate Yoco model')
-    parser.add_argument('--weights', type=str, required=True, help='Path to model weights')
-    parser.add_argument('--data', type=str, required=True, help='Path to validation data')
-    parser.add_argument('--batch-size', type=int, default=32, help='Batch size')
-    parser.add_argument('--dim', type=str, choices=['2d', '3d'], required=True, help='Model dimension')
-    parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu', help='Device to use')
+    parser = argparse.ArgumentParser(description="Validate Yoco model")
+    parser.add_argument(
+        "--weights", type=str, required=True, help="Path to model weights"
+    )
+    parser.add_argument(
+        "--data", type=str, required=True, help="Path to validation data"
+    )
+    parser.add_argument(
+        "--batch-size", type=int, default=32, help="Batch size"
+    )
+    parser.add_argument(
+        "--dim",
+        type=str,
+        choices=["2d", "3d"],
+        required=True,
+        help="Model dimension",
+    )
+    parser.add_argument(
+        "--device",
+        type=str,
+        default="cuda" if torch.cuda.is_available() else "cpu",
+        help="Device to use",
+    )
     return parser.parse_args()
+
 
 def validate(model, dataloader, device):
     model.eval()
@@ -43,7 +66,7 @@ def validate(model, dataloader, device):
     all_targets = []
 
     with torch.no_grad():
-        for batch in tqdm(dataloader, desc='Validating'):
+        for batch in tqdm(dataloader, desc="Validating"):
             inputs, targets = batch
             inputs = inputs.to(device)
             outputs = model(inputs)
@@ -57,35 +80,39 @@ def validate(model, dataloader, device):
 
     return precision, recall, f1, mAP, cm
 
+
 def main():
     args = parse_args()
     device = torch.device(args.device)
 
     # Load model
-    if args.dim == '2d':
+    if args.dim == "2d":
         model = YOCO(num_classes=80)
     else:
         model = YOCO3D(num_classes=80)
+
     model.load_state_dict(torch.load(args.weights))
     model.to(device)
 
     # Load dataset
-    if args.dim == '2d':
+    if args.dim == "2d":
         dataset = ImageDataset(args.data, train=False)
     else:
         dataset = PointCloudDataset(args.data, train=False)
+
     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
 
     # Run validation
     precision, recall, f1, mAP, cm = validate(model, dataloader, device)
 
     # Print results
-    print(f'Precision: {precision:.4f}')
-    print(f'Recall: {recall:.4f}')
-    print(f'F1 Score: {f1:.4f}')
-    print(f'mAP: {mAP:.4f}')
-    print('Confusion Matrix:')
+    print(f"Precision: {precision:.4f}")
+    print(f"Recall: {recall:.4f}")
+    print(f"F1 Score: {f1:.4f}")
+    print(f"mAP: {mAP:.4f}")
+    print("Confusion Matrix:")
     print(cm)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

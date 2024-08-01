@@ -19,7 +19,7 @@
 # Author: Kasinadhsarma
 
 import numpy as np
-import torch
+
 
 def precision_recall_f1(preds, targets, iou_threshold=0.5):
     """Calculate precision, recall, and F1 score."""
@@ -33,8 +33,13 @@ def precision_recall_f1(preds, targets, iou_threshold=0.5):
             fn += 1
     precision = tp / (tp + fp) if tp + fp > 0 else 0
     recall = tp / (tp + fn) if tp + fn > 0 else 0
-    f1 = 2 * (precision * recall) / (precision + recall) if precision + recall > 0 else 0
+    f1 = (
+        2 * precision * recall / (precision + recall)
+        if precision + recall > 0
+        else 0
+    )
     return precision, recall, f1
+
 
 def calculate_iou(box1, box2):
     """Calculate Intersection over Union (IoU) for two bounding boxes."""
@@ -48,6 +53,7 @@ def calculate_iou(box1, box2):
     union_area = box1_area + box2_area - inter_area
     return inter_area / union_area if union_area > 0 else 0
 
+
 def mean_average_precision(preds, targets, iou_threshold=0.5):
     """Calculate mean Average Precision (mAP)."""
     aps = []
@@ -57,12 +63,14 @@ def mean_average_precision(preds, targets, iou_threshold=0.5):
         aps.append(ap)
     return np.mean(aps)
 
+
 def confusion_matrix(preds, targets, num_classes):
     """Calculate confusion matrix."""
     matrix = np.zeros((num_classes, num_classes), dtype=int)
     for pred, target in zip(preds, targets):
         matrix[target, pred] += 1
     return matrix
+
 
 def calculate_3d_iou(box1, box2):
     """Calculate 3D Intersection over Union (IoU) for two bounding boxes."""
@@ -75,5 +83,6 @@ def calculate_3d_iou(box1, box2):
     box2_volume = (x2g - x1g) * (y2g - y1g) * (z2g - z1g)
     union_volume = box1_volume + box2_volume - inter_volume
     return inter_volume / union_volume if union_volume > 0 else 0
+
 
 # Add more metrics as needed

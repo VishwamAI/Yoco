@@ -22,11 +22,13 @@ import torch
 import cv2
 import numpy as np
 from torch.utils.data import Dataset
-from torchvision import transforms
 import random
 
+
 class VideoDataset(Dataset):
-    def __init__(self, video_paths, sequence_length=16, transform=None, train=True):
+    def __init__(
+        self, video_paths, sequence_length=16, transform=None, train=True
+    ):
         self.video_paths = video_paths
         self.sequence_length = sequence_length
         self.transform = transform
@@ -60,9 +62,11 @@ class VideoDataset(Dataset):
         cap.release()
 
         if len(frames) < self.sequence_length:
-            frames = frames + [frames[-1]] * (self.sequence_length - len(frames))
+            frames = frames + [frames[-1]] * (
+                self.sequence_length - len(frames)
+            )
         elif len(frames) > self.sequence_length:
-            frames = frames[:self.sequence_length]
+            frames = frames[: self.sequence_length]
 
         return frames
 
@@ -77,11 +81,15 @@ class VideoDataset(Dataset):
 
         return frames
 
+
 # Example usage:
 # transform = transforms.Compose([
 #     transforms.ToPILImage(),
 #     transforms.Resize((224, 224)),
 #     transforms.ToTensor(),
-#     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+#     transforms.Normalize(
+#         mean=[0.485, 0.456, 0.406],
+#         std=[0.229, 0.224, 0.225]
+#     ),
 # ])
 # video_dataset = VideoDataset(video_paths, transform=transform)
